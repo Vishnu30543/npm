@@ -1,0 +1,14 @@
+# Exclude test sources and reports from published package
+src/**/*.test.*
+src/**/*.spec.*
+__tests__/
+coverage/
+.vitest/
+
+# Tooling and local-only files
+.vscode/
+.env*
+*.local
+npm-debug.log*
+*.log
+.DS_Store

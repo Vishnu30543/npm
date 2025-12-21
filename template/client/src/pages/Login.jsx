@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+import { GoogleLogin } from '@react-oauth/google';
+
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const { login } = useAuth();
+    const { login, googleLogin } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -16,6 +18,15 @@ const Login = () => {
             navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');
+        }
+    };
+
+    const handleGoogleSuccess = async (credentialResponse) => {
+        try {
+            await googleLogin(credentialResponse.credential);
+            navigate('/dashboard');
+        } catch (err) {
+            setError('Google Login Failed');
         }
     };
 
@@ -42,8 +53,23 @@ const Login = () => {
                         required
                     />
                 </div>
+                <div className="forgot-password">
+                    <Link to="/forgot-password">Forgot Password?</Link>
+                </div>
                 <button type="submit">Login</button>
             </form>
+
+            <div className="auth-divider">
+                <span>OR</span>
+            </div>
+
+            <div className="google-login-container">
+                <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => setError('Google Login Failed')}
+                />
+            </div>
+
             <p>
                 Don't have an account? <Link to="/register">Register</Link>
             </p>

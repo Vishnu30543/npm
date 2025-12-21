@@ -42,6 +42,21 @@ npm run dev
 
 The server will run on `http://localhost:5000`.
 
+### 3. Setup Google Auth & Email (Optional for development, required for features)
+
+**Google Login:**
+1.  Go to [Google Cloud Console](https://console.cloud.google.com/).
+2.  Create a project and setup OAuth Consent Screen.
+3.  Create Credentials > OAuth Client ID (Web Application).
+4.  Add `http://localhost:5173` to "Authorized JavaScript origins".
+5.  Copy Client ID to `.env` (`GOOGLE_CLIENT_ID`) in *both* server and client (Vite requires `VITE_GOOGLE_CLIENT_ID` in `client/.env`).
+
+**Forgot Password:**
+1.  For development, use a Gmail account.
+2.  Enable 2-Step Verification.
+3.  Generate an [App Password](https://myaccount.google.com/apppasswords).
+4.  Add email and app password to `server/.env`.
+
 ### 2. Setup Frontend
 
 Open a new terminal and navigate to the client directory:
