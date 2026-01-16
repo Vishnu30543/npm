@@ -41,6 +41,27 @@ program
       await renameIfExists(path.join(projectPath, 'client', '_gitignore'), path.join(projectPath, 'client', '.gitignore'));
       await renameIfExists(path.join(projectPath, 'server', '_gitignore'), path.join(projectPath, 'server', '.gitignore'));
 
+          // Create a default .env file in the server folder
+          const envPath = path.join(projectPath, 'server', '.env');
+          if (!fs.existsSync(envPath)) {
+            await fs.writeFile(envPath, 'PORT=5000\nMONGO_URI=mongodb://localhost:27017/test\nJWT_SECRET=dev_jwt_secret\nGOOGLE_CLIENT_ID=your_google_client_id_here\nCLIENT_URL=http://localhost:5173\nSMTP_HOST=smtp.gmail.com\nSMTP_PORT=587\nSMTP_EMAIL=your_email@gmail.com\nSMTP_PASSWORD=your_app_specific_password_here\nFROM_NAME=Support Team\n');
+            console.log(pc.green('Created default .env file in server folder.'));
+          }
+
+        // Create a default .env file in the client folder
+        const clientEnvPath = path.join(projectPath, 'client', '.env');
+        if (!fs.existsSync(clientEnvPath)) {
+          await fs.writeFile(clientEnvPath, 'VITE_API_URL=http://localhost:5000\nVITE_GOOGLE_CLIENT_ID=your_web_oauth_client_id_here\n');
+          console.log(pc.green('Created default .env file in client folder.'));
+        }
+
+          // Create a default .env file in the server folder (alternative content)
+          const envPath2 = path.join(projectPath, 'server', '.env');
+          if (!fs.existsSync(envPath2)) {
+            await fs.writeFile(envPath2, 'MONGO_URI=your_mongo_uri_here\nJWT_SECRET=your_jwt_secret_here\n');
+            console.log(pc.green('Created default .env file in server folder.'));
+          }
+
       // Commander sets --no-google default to true; use source to know if user passed a flag.
       const googleSource = program.getOptionValueSource('google');
       let useGoogle = options.google;
