@@ -1,0 +1,25 @@
+# Exclude build outputs, deps, envs, and editor cruft from the published CLI package
+node_modules/
+**/node_modules/
+**/dist/
+**/.env
+**/.env*
+**/.npmrc
+**/.DS_Store
+**/.vscode/
+**/.idea/
+**/coverage/
+**/.vitest/
+**/logs/
+**/*.log
+**/npm-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
+**/.npmignore
+**/.turbo/
+**/.cache/
+template/client/.npmignore
+template/server/.npmignore

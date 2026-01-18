@@ -5,6 +5,11 @@ __tests__/
 coverage/
 .vitest/
 
+# Build and deps
+dist/
+node_modules/
+package-lock.json
+
 # Tooling and local-only files
 .vscode/
 .env*

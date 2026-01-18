@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { Command } from 'commander';
 import pc from 'picocolors';
+import readline from 'readline';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,11 +16,12 @@ program
   .name('create-react-express-auth')
   .description('Scaffold a MERN stack app with Auth (Vite + Express)')
   .argument('[project-name]', 'Name of the project directory')
-  .action(async (projectName) => {
+  .option('--no-google', 'Skip wiring Google OAuth (omit buttons/provider)')
+  .action(async (projectName, options) => {
     try {
       if (!projectName) {
         console.error(pc.red('Please specify the project name:'));
-        console.log(`  ${pc.cyan('npx create-react-express-auth')} ${pc.green('<project-name>')}\n`);
+        console.log(`  ${pc.cyan('npx create-react-express-auth')} ${pc.green('<project-name>')}`);
         process.exit(1);
       }
 
@@ -33,35 +35,79 @@ program
 
       console.log(pc.blue(`\nCreating a new MERN Auth app in ${pc.bold(projectPath)}...`));
 
-      // Copy template files
       await fs.copy(templatePath, projectPath);
 
-      // Rename _gitignore to .gitignore
-      const gitignorePath = path.join(projectPath, '_gitignore');
-      const dotGitignorePath = path.join(projectPath, '.gitignore');
-      
-      if (fs.existsSync(gitignorePath)) {
-        await fs.move(gitignorePath, dotGitignorePath);
+      await renameIfExists(path.join(projectPath, '_gitignore'), path.join(projectPath, '.gitignore'));
+      await renameIfExists(path.join(projectPath, 'client', '_gitignore'), path.join(projectPath, 'client', '.gitignore'));
+      await renameIfExists(path.join(projectPath, 'server', '_gitignore'), path.join(projectPath, 'server', '.gitignore'));
+
+      // Create a default .env file in the server folder
+      const envPath = path.join(projectPath, 'server', '.env');
+      if (!fs.existsSync(envPath)) {
+        const envContent = `
+# Server Configuration
+PORT=5000
+MONGO_URI=mongodb://localhost:27017/test
+JWT_SECRET=dev_jwt_secret
+
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+GOOGLE_CALLBACK_URL=http://localhost:5000/auth/google/callback
+CLIENT_URL=http://localhost:5173
+
+# Email Service Configuration (SMTP)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_EMAIL=your_email@gmail.com
+SMTP_PASSWORD=your_app_specific_password_here
+FROM_NAME=Support Team
+`.trim();
+        await fs.writeFile(envPath, envContent);
+        console.log(pc.green('Created default .env file in server folder.'));
       }
 
-      // Rename client/_gitignore to client/.gitignore if it exists
-      const clientGitignore = path.join(projectPath, 'client', '_gitignore');
-      const clientDotGitignore = path.join(projectPath, 'client', '.gitignore');
-      if (fs.existsSync(clientGitignore)) {
-        await fs.move(clientGitignore, clientDotGitignore);
+      // Create a default .env file in the client folder
+      const clientEnvPath = path.join(projectPath, 'client', '.env');
+      if (!fs.existsSync(clientEnvPath)) {
+        const clientEnvContent = `
+# API Configuration
+VITE_API_URL=http://localhost:5000
+
+# Google OAuth Configuration
+VITE_GOOGLE_CLIENT_ID=your_web_oauth_client_id_here
+`.trim();
+        await fs.writeFile(clientEnvPath, clientEnvContent);
+        console.log(pc.green('Created default .env file in client folder.'));
       }
 
-       // Rename server/_gitignore to server/.gitignore if it exists
-      const serverGitignore = path.join(projectPath, 'server', '_gitignore');
-      const serverDotGitignore = path.join(projectPath, 'server', '.gitignore');
-      if (fs.existsSync(serverGitignore)) {
-        await fs.move(serverGitignore, serverDotGitignore);
+      // Create a default .env file in the server folder (alternative content)
+      const envPath2 = path.join(projectPath, 'server', '.env');
+      if (!fs.existsSync(envPath2)) {
+        await fs.writeFile(envPath2, 'MONGO_URI=your_mongo_uri_here\nJWT_SECRET=your_jwt_secret_here\n');
+        console.log(pc.green('Created default .env file in server folder.'));
       }
+
+      // Commander sets --no-google default to true; use source to know if user passed a flag.
+      const googleSource = program.getOptionValueSource('google');
+      let useGoogle = options.google;
+      if (googleSource === 'default') {
+        useGoogle = await askYesNo('Include Google Auth? (Y/n): ', true);
+      }
+
+      if (!useGoogle) {
+        const overlayPath = path.join(__dirname, '../template/google-off');
+        await applyOverlay(projectPath, overlayPath);
+        console.log(pc.yellow('Google auth wiring removed.'));
+      }
+
+      // Drop overlay folder from the generated project to keep it clean.
+      await fs.remove(path.join(projectPath, 'google-off'));
 
       console.log(pc.green('\nSuccess! Created project structure.'));
       console.log('\nNext steps:');
       console.log(`  ${pc.cyan(`cd ${projectName}`)}`);
-      
+
       console.log(pc.yellow('\n1. Setup Backend:'));
       console.log(`  ${pc.cyan('cd server')}`);
       console.log(`  ${pc.cyan('npm install')}`);
@@ -75,7 +121,6 @@ program
       console.log(`  ${pc.cyan('npm run dev')}`);
 
       console.log(pc.magenta('\nHappy Coding! 🚀\n'));
-
     } catch (error) {
       console.error(pc.red('Error creating project:'), error);
       process.exit(1);
@@ -83,3 +128,29 @@ program
   });
 
 program.parse(process.argv);
+
+async function askYesNo(question, defaultYes = true) {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const hint = defaultYes ? 'Y/n' : 'y/N';
+    rl.question(`${question} ${hint} `, (answer) => {
+      rl.close();
+      const normalized = answer.trim().toLowerCase();
+      if (!normalized) return resolve(defaultYes);
+      if (['y', 'yes'].includes(normalized)) return resolve(true);
+      if (['n', 'no'].includes(normalized)) return resolve(false);
+      return resolve(defaultYes);
+    });
+  });
+}
+
+async function renameIfExists(from, to) {
+  if (await fs.pathExists(from)) {
+    await fs.move(from, to, { overwrite: true });
+  }
+}
+
+async function applyOverlay(targetPath, overlayPath) {
+  if (!(await fs.pathExists(overlayPath))) return;
+  await fs.copy(overlayPath, targetPath, { overwrite: true });
+}

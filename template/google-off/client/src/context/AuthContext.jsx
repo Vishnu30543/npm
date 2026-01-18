@@ -1,5 +1,4 @@
 import { createContext, useState, useEffect, useContext } from 'react';
-import { googleLogout } from '@react-oauth/google';
 import api from '../api/axios';
 
 const AuthContext = createContext();
@@ -35,22 +34,13 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-        googleLogout();
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
     };
 
-    const googleLogin = async (token) => {
-        const { data } = await api.post('/auth/google-login', { token });
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        setUser(data.user);
-        return data.user;
-    };
-
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, googleLogin, loading }}>
+        <AuthContext.Provider value={{ user, login, register, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );
