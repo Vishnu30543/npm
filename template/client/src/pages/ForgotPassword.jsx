@@ -12,10 +12,10 @@ const ForgotPassword = () => {
         setMessage('');
         setError('');
         try {
-            await axios.post('/auth/forgot-password', { email });
-            setMessage('Email sent! check your inbox.');
+            const response = await axios.post('/auth/forgot-password', { email });
+            setMessage(response.data?.message || 'Password reset link has been sent to your email address.');
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to send email');
+            setError(err.response?.data?.message || 'Failed to send reset email. Please try again later.');
         }
     };
 
