@@ -132,6 +132,15 @@ router.post('/google-login', async (req, res) => {
 router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
 
+    // Check if SMTP is configured
+    const smtpEmail = process.env.SMTP_EMAIL;
+    const smtpPassword = process.env.SMTP_PASSWORD;
+    if (!smtpEmail || smtpEmail.startsWith('your_') || !smtpPassword || smtpPassword.startsWith('your_')) {
+        return res.status(503).json({
+            message: 'Email service is not configured. Please set SMTP_EMAIL and SMTP_PASSWORD in the server .env file to enable password reset.'
+        });
+    }
+
     try {
         const user = await User.findOne({ email });
 
@@ -171,15 +180,15 @@ router.post('/forgot-password', async (req, res) => {
                 html: message,
             });
 
-            res.status(200).json({ success: true, data: 'Email sent' });
+            res.status(200).json({ success: true, message: 'Password reset link has been sent to your email address.' });
         } catch (err) {
-            console.error(err);
+            console.error('Email sending failed:', err);
             user.resetPasswordToken = undefined;
             user.resetPasswordExpire = undefined;
 
             await user.save();
 
-            return res.status(500).json({ message: 'Email could not be sent' });
+            return res.status(500).json({ message: 'Failed to send email. Please check SMTP configuration on the server.' });
         }
     } catch (err) {
         res.status(500).json({ message: 'Server error' });

@@ -111,7 +111,7 @@ VITE_GOOGLE_CLIENT_ID=your_web_oauth_client_id_here
       console.log(pc.yellow('\n1. Setup Backend:'));
       console.log(`  ${pc.cyan('cd server')}`);
       console.log(`  ${pc.cyan('npm install')}`);
-      console.log(`  ${pc.cyan('cp .env.example .env')}  (and configure MONGO_URI)`);
+      console.log(`  ${pc.gray('Configure .env file (MONGO_URI, Google OAuth, SMTP settings)')}`);
       console.log(`  ${pc.cyan('npm run dev')}`);
 
       console.log(pc.yellow('\n2. Setup Frontend:'));
